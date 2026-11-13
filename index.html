@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <!--
+    EXPERT NOTE: viewport is critical for mobile.
+    Without it, mobile browsers render the desktop layout scaled down,
+    which is the primary cause of unprofessional mobile sites.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Aletheia — Call Provenance Verifier. Reveal what is hidden. Verify the origin of a call before you trust it." />
+  <title>Aletheia — Call Provenance Verifier</title>
+  <link rel="stylesheet" href="style.css" />
+  <!--
+    EXPERT NOTE: jsPDF is loaded via CDN for client-side PDF generation.
+    No data leaves the browser. This is a deliberate privacy architecture:
+    a security tool must not require the user to trust a server.
+  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <!--
+    HEADER: Brand identity.
+    The Greek key pattern is achieved in CSS, not with an image,
+    to keep the site fast on mobile networks.
+  -->
+  <header class="site-header">
+    <div class="brand-mark" aria-hidden="true">Α</div>
+    <div>
+      <h1>ALETHEIA</h1>
+      <p class="tagline">Reveal What Is Hidden</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!--
+      ACADEMIC DEFINITION: A security tool must define its terms.
+      This prevents misuse and establishes scholarly credibility.
+    -->
+    <section class="definition card">
+      <h2>Definition</h2>
+      <p><strong>Aletheia</strong> <span class="greek">(ἀλήθεια)</span> — <em>noun.</em> Truth; disclosure; the state of not being hidden.</p>
+      <p>Aletheia does not track callers. It verifies <strong>provenance</strong> — whether a call truly originates from the organisation it claims to represent — using only data you provide.</p>
+    </section>
+
+    <!--
+      INPUT FORM: Mobile-first.
+      inputmode="tel" triggers the numeric keypad on mobile.
+      autocomplete="off" prevents the browser storing sensitive numbers.
+    -->
+    <section class="card">
+      <h2>Verify a Call</h2>
+      <form id="verifyForm" novalidate>
+        <label for="callerNumber">Caller Number</label>
+        <input id="callerNumber" type="tel" inputmode="tel" autocomplete="off" placeholder="e.g. 020 7946 0958" required />
+
+        <label for="claimedOrg">Claimed Organisation</label>
+        <select id="claimedOrg" required>
+          <option value="">Select organisation…</option>
+          <option value="Barclays">Barclays Bank</option>
+          <option value="HSBC">HSBC</option>
+          <option value="Lloyds">Lloyds Bank</option>
+          <option value="HMRC">HMRC</option>
+          <option value="NHS">NHS</option>
+          <option value="Other">Other / Unknown</option>
+        </select>
+
+        <label for="callTime">Time of Call</label>
+        <input id="callTime" type="datetime-local" required />
+
+        <label for="notes">Notes <span class="optional">(optional)</span></label>
+        <textarea id="notes" rows="3" placeholder="What did the caller ask for? Did they request a code, password, or transfer?"></textarea>
+
+        <button type="submit" class="btn-primary">Verify Provenance</button>
+        <p class="privacy-note">All processing occurs in your browser. No data is uploaded or stored.</p>
+      </form>
+    </section>
+
+    <!--
+      RESULT: Hidden by default. Revealed via JavaScript.
+      aria-live ensures screen readers announce the verdict.
+    -->
+    <section id="result" class="card result hidden" aria-live="polite">
+      <div id="verdictBadge" class="verdict-badge">—</div>
+      <h2 id="verdictTitle">Verdict</h2>
+      <p id="verdictExplanation"></p>
+
+      <div class="score-row">
+        <span>Provenance Confidence</span>
+        <strong id="confidenceScore">—</strong>
+      </div>
+      <div class="progress-track"><div id="confidenceBar" class="progress-fill"></div></div>
+
+      <ul id="checksList" class="checks"></ul>
+
+      <button id="downloadBtn" class="btn-secondary" type="button">Download Evidence Report (PDF)</button>
+      <p class="legal-note">This report is for evidence preservation. It is not a legal determination of fraud. Report suspected fraud to Action Fraud.</p>
+    </section>
+
+    <!--
+      METHODOLOGY: Scholarly transparency.
+      A security tool that hides its logic cannot be trusted.
+    -->
+    <section class="card methodology">
+      <h2>Methodology</h2>
+      <ol>
+        <li><strong>Normalisation:</strong> The number is stripped of spaces and converted to international format.</li>
+        <li><strong>Format Validation:</strong> UK numbers are checked against Ofcom numbering rules.</li>
+        <li><strong>Provenance Comparison:</strong> The number is compared to the verified official number for the claimed organisation.</li>
+        <li><strong>Risk Assessment:</strong> A confidence score is derived from the above, not from location tracking.</li>
+      </ol>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Topshugar &middot; Provenance &amp; Truth</p>
+    <p class="footer-small">Aletheia is a defensive tool. It does not intercept, track, or locate callers.</p>
+  </footer>
+
+</body>
+</html>
