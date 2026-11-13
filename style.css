@@ -40,7 +40,7 @@ body {
   padding-bottom: 40px;
 }
 
-/* HEADER */
+/* HEADER — EDITED FOR CODED SVG LOGO */
 .site-header {
   display: flex;
   align-items: center;
@@ -50,23 +50,45 @@ body {
   margin: 0 auto;
   border-bottom: 1px solid var(--border);
 }
-.brand-mark {
-  width: 52px; height: 52px;
-  display: grid; place-items: center;
-  border: 1px solid var(--gold);
+
+/*
+  EDITED: Replaces the old .brand-mark text circle.
+  The logo is now assets/aletheia.svg — vector, sharp on all phones.
+  width/height in CSS + width/height in HTML prevents layout shift.
+  flex-shrink: 0 prevents the logo squashing on narrow phones.
+*/
+.logo-img {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  font-family: Georgia, serif;
-  font-size: 26px;
-  color: var(--gold);
+  flex-shrink: 0;
+  display: block;
+  /* Fallback background if SVG fails to load */
+  background: #0a0a0c;
+  object-fit: cover;
 }
+
+/*
+  EDITED: New wrapper for title + tagline.
+  Keeps them stacked together so they never wrap under the logo.
+*/
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0; /* Allows text to truncate cleanly on very small screens */
+}
+
 .site-header h1 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 28px;
   letter-spacing: 0.18em;
   font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
 }
-.tagline { margin: 0; color: var(--gold-light); font-size: 13px; letter-spacing: 0.08em; }
+.tagline { margin: 2px 0 0; color: var(--gold-light); font-size: 13px; letter-spacing: 0.08em; }
 
 /* CARDS */
 .card {
@@ -98,6 +120,7 @@ input, select, textarea {
   padding: 14px 12px;
   font-size: 16px; /* EXPERT: 16px prevents iOS auto-zoom on focus */
   outline: none;
+  appearance: none; /* EDITED: Removes default iOS styling for consistent look */
 }
 input:focus, select:focus, textarea:focus { border-color: var(--gold); }
 textarea { resize: vertical; }
@@ -111,6 +134,8 @@ textarea { resize: vertical; }
   font-weight: 600;
   cursor: pointer;
   margin-top: 18px;
+  /* EDITED: Prevents double-tap zoom delay on mobile */
+  touch-action: manipulation;
 }
 .btn-primary { background: var(--gold); color: #0a0a0c; border: none; }
 .btn-primary:active { background: var(--gold-light); }
@@ -151,4 +176,6 @@ footer { text-align: center; padding: 24px 16px; border-top: 1px solid var(--bor
   .container { padding: 24px; }
   .card { padding: 28px; }
   .site-header h1 { font-size: 32px; }
+  /* EDITED: Slightly larger logo on desktop for presence */
+  .logo-img { width: 58px; height: 58px; }
 }
