@@ -23,12 +23,14 @@
 
   <!--
     HEADER: Brand identity.
-    The Greek key pattern is achieved in CSS, not with an image,
-    to keep the site fast on mobile networks.
+    EDITED: Now uses the coded SVG logo from assets/aletheia.svg
+    instead of a text mark. SVG is vector, so it stays sharp on
+    all mobile screens and loads in ~2KB vs ~300KB for a PNG.
+    The old <div class="brand-mark"> has been removed.
   -->
   <header class="site-header">
-    <div class="brand-mark" aria-hidden="true">Α</div>
-    <div>
+    <img src="assets/aletheia.svg" alt="Aletheia logo — gold letter A in a Greek key circle" class="logo-img" width="52" height="52" />
+    <div class="brand-text">
       <h1>ALETHEIA</h1>
       <p class="tagline">Reveal What Is Hidden</p>
     </div>
