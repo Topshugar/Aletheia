@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ALETHEIA — CODED LOGO
+  EXPERT NOTE: SVG is used instead of PNG because:
+    1. It is vector — it never blurs on retina / mobile screens
+    2. It is 2KB, not 200KB — critical for mobile speed
+    3. The gold colour can be changed in one place: --gold
+    4. No external image request is required
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Aletheia logo">
+  <defs>
+    <!-- Gold gradient for premium metallic effect -->
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8C766"/>
+      <stop offset="45%" stop-color="#C9A227"/>
+      <stop offset="100%" stop-color="#9A7A1A"/>
+    </linearGradient>
+
+    <!-- Greek key pattern — simplified meander -->
+    <pattern id="greekKey" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="none"/>
+      <path d="M4 20 V8 H16 V14 H10 V12" fill="none" stroke="#C9A227" stroke-width="1.6"/>
+    </pattern>
+  </defs>
+
+  <!-- Background — transparent for use on dark site -->
+  <rect width="512" height="512" fill="#0A0A0C" rx="0"/>
+
+  <!-- Outer Greek key ring -->
+  <circle cx="256" cy="256" r="222" fill="none" stroke="url(#gold)" stroke-width="3"/>
+  <circle cx="256" cy="256" r="204" fill="none" stroke="url(#greekKey)" stroke-width="18" opacity="0.9"/>
+  <circle cx="256" cy="256" r="186" fill="none" stroke="url(#gold)" stroke-width="1.5"/>
+
+  <!-- Inner circle -->
+  <circle cx="256" cy="256" r="168" fill="none" stroke="url(#gold)" stroke-width="3"/>
+
+  <!-- Letter A — serif, scholarly -->
+  <!-- EXPERT NOTE: Text is used, not a path, so the logo remains editable -->
+  <text x="256" y="330" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="220" font-weight="400"
+        fill="url(#gold)" letter-spacing="2">A</text>
+
+  <!-- Small divider line under A -->
+  <line x1="196" y1="360" x2="316" y2="360" stroke="url(#gold)" stroke-width="1.5"/>
+
+  <!-- Wordmark -->
+  <text x="256" y="400" text-anchor="middle"
+        font-family="Georgia, serif"
+        font-size="26" letter-spacing="12"
+        fill="#E8C766">ALETHEIA</text>
+</svg>
