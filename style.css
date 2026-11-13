@@ -1,0 +1,154 @@
+/* ============================================================
+   ALETHEIA — DESIGN SYSTEM
+   EXPERT NOTE: Mobile-first means base styles target mobile,
+   and desktop is an enhancement via media queries.
+   This prevents the common error of desktop-first sites
+   that break on phones.
+   ============================================================ */
+
+:root {
+  --bg: #0a0a0c;
+  --card: #141417;
+  --gold: #c9a227;
+  --gold-light: #e8c766;
+  --text: #f2f0e8;
+  --muted: #9a978c;
+  --danger: #d64545;
+  --warning: #e0a32e;
+  --success: #2ea86b;
+  --border: #2a2a2e;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  line-height: 1.6;
+  /* Prevents iOS text inflation on mobile */
+  -webkit-text-size-adjust: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: 40px;
+}
+
+/* HEADER */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 16px 10px;
+  max-width: 640px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+.brand-mark {
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 26px;
+  color: var(--gold);
+}
+.site-header h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  letter-spacing: 0.18em;
+  font-weight: 400;
+}
+.tagline { margin: 0; color: var(--gold-light); font-size: 13px; letter-spacing: 0.08em; }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 16px;
+}
+.card h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.greek { color: var(--gold-light); }
+.definition p { color: #d8d5c9; font-size: 15px; }
+
+/* FORM — MOBILE OPTIMISED */
+label { display: block; font-size: 13px; font-weight: 600; margin: 16px 0 6px; letter-spacing: 0.02em; }
+.optional { color: var(--muted); font-weight: 400; }
+
+input, select, textarea {
+  width: 100%;
+  background: #0f0f12;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 14px 12px;
+  font-size: 16px; /* EXPERT: 16px prevents iOS auto-zoom on focus */
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+textarea { resize: vertical; }
+
+/* BUTTONS — 48px minimum touch target for mobile accessibility */
+.btn-primary, .btn-secondary {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 18px;
+}
+.btn-primary { background: var(--gold); color: #0a0a0c; border: none; }
+.btn-primary:active { background: var(--gold-light); }
+.btn-secondary { background: transparent; color: var(--gold-light); border: 1px solid var(--gold); }
+
+.privacy-note, .legal-note, .footer-small { color: var(--muted); font-size: 12.5px; }
+
+/* RESULT */
+.hidden { display: none; }
+.verdict-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.verdict-badge.authentic { background: #123d2a; color: #7dd8a8; border: 1px solid var(--success); }
+.verdict-badge.spurious { background: #3d1212; color: #f0a0a0; border: 1px solid var(--danger); }
+.verdict-badge.inconclusive { background: #3a2d0f; color: #f0d48a; border: 1px solid var(--warning); }
+
+.score-row { display: flex; justify-content: space-between; margin-top: 14px; font-size: 14px; }
+.progress-track { height: 8px; background: #222; border-radius: 999px; margin-top: 8px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; background: var(--gold); transition: width 0.6s ease; }
+
+.checks { list-style: none; padding: 0; margin: 16px 0 0; }
+.checks li { padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
+.checks li::before { content: "— "; color: var(--gold); }
+
+.methodology ol { padding-left: 18px; font-size: 14px; color: #d8d5c9; }
+.methodology li { margin-bottom: 8px; }
+
+footer { text-align: center; padding: 24px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+/* DESKTOP ENHANCEMENT — only after mobile is perfect */
+@media (min-width: 768px) {
+  .container { padding: 24px; }
+  .card { padding: 28px; }
+  .site-header h1 { font-size: 32px; }
+}
