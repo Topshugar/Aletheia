@@ -11,12 +11,19 @@
  * We do NOT claim to identify a caller. We test consistency:
  * Does the number presented match the number the organisation
  * publicly publishes? If not, provenance fails.
+ *
+ * EDIT HISTORY:
+ * v2 — Fixed normalisation for 111, fixed scoring for "Other",
+ * fixed PDF overflow, added jsPDF failure handling.
  * ============================================================
  */
+
+"use strict";
 
 // EXPERT NOTE: In production, this list must be maintained from
 // official sources only — e.g. the bank's own website, not
 // third-party directories. A single incorrect entry destroys trust.
+// Format: All numbers stored in E.164 (+44...), except short codes.
 const OFFICIAL_NUMBERS = {
   "Barclays": ["+442071169000", "+443333000000"],
   "HSBC": ["+442079920888"],
@@ -25,6 +32,7 @@ const OFFICIAL_NUMBERS = {
   "NHS": ["111"] // NHS 111 is a short code, not a standard number
 };
 
+// DOM references — cached once for performance on mobile
 const form = document.getElementById("verifyForm");
 const resultSection = document.getElementById("result");
 const verdictBadge = document.getElementById("verdictBadge");
@@ -33,6 +41,7 @@ const verdictExplanation = document.getElementById("verdictExplanation");
 const confidenceScore = document.getElementById("confidenceScore");
 const confidenceBar = document.getElementById("confidenceBar");
 const checksList = document.getElementById("checksList");
+const downloadBtn = document.getElementById("downloadBtn");
 
 // Stores the last verification for PDF generation
 let lastReport = null;
@@ -42,12 +51,24 @@ let lastReport = null;
  * EXPERT NOTE: User input is hostile by nature — spaces,
  * brackets, dashes, leading 00, and +44 must all be handled.
  * Failure to normalise is the most common bug in phone tools.
+ *
+ * FIXED in v2: Short codes like 111 were previously converted
+ * to +44111. They are now preserved.
  */
 function normaliseNumber(raw) {
   if (!raw) return "";
-  let n = raw.replace(/[\s\-().]/g, "");
+  let n = raw.trim().replace(/[\s\-().]/g, "");
+
+  // FIXED: Preserve UK short codes (111, 999, 101)
+  if (/^\d{3}$/.test(n)) return n;
+
+  // 0044... -> +44...
   if (n.startsWith("00")) n = "+" + n.slice(2);
+  // 0... -> +44...
   if (n.startsWith("0")) n = "+44" + n.slice(1);
+  // 44... without + -> +44...
+  if (/^44\d{10}$/.test(n)) n = "+" + n;
+
   return n;
 }
 
@@ -56,10 +77,18 @@ function normaliseNumber(raw) {
  * EXPERT NOTE: We validate format, not existence.
  * No static site can prove a number exists without
  * querying a carrier, which would violate privacy.
+ *
+ * FIXED in v2: Now correctly accepts +44 20, +44 30, +44 33, +44 7
+ * and rejects +1, +234 and other non-UK prefixes as non-UK.
  */
 function isValidUKFormat(n) {
-  // +44 followed by 10 digits, or 111 for NHS, or +44 20 / 30 etc.
-  return /^\+44\d{10}$/.test(n) || n === "111";
+  if (n === "111" || n === "999" || n === "101") return true;
+  // +44 + 10 digits, first digit after +44 must be 1,2,3 or 7
+  return /^\+44[1237]\d{9}$/.test(n);
+}
+
+function isNonUKInternational(n) {
+  return n.startsWith("+") && !n.startsWith("+44");
 }
 
 form.addEventListener("submit", (e) => {
@@ -70,8 +99,15 @@ form.addEventListener("submit", (e) => {
   const callTime = document.getElementById("callTime").value;
   const notes = document.getElementById("notes").value.trim();
 
+  // EXPERT NOTE: Never use alert() in production mobile UX.
+  // It blocks the thread and looks childish. Use inline validation.
   if (!rawNumber || !claimedOrg || !callTime) {
-    alert("Please complete all required fields.");
+    verdictBadge.textContent = "INCOMPLETE";
+    verdictBadge.className = "verdict-badge inconclusive";
+    verdictTitle.textContent = "Complete All Fields";
+    verdictExplanation.textContent = "Please enter the caller number, claimed organisation, and time of call before verifying.";
+    resultSection.classList.remove("hidden");
+    resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
 
@@ -83,35 +119,47 @@ form.addEventListener("submit", (e) => {
 
   // CHECK 1: Format
   const formatOk = isValidUKFormat(normalised);
-  checks.push(formatOk
-    ? `✓ Number format is valid for the UK: ${normalised}`
-    : `✗ Number format is invalid or non-UK: ${normalised} — this is a strong spoofing indicator.`);
-  if (formatOk) score += 30;
+  const nonUK = isNonUKInternational(normalised);
+
+  if (nonUK) {
+    checks.push(`✗ Non-UK number detected: ${normalised} — A genuine UK bank or HMRC will not call from a foreign number.`);
+    score += 0;
+  } else if (formatOk) {
+    checks.push(`✓ Number format is valid for the UK: ${normalised}`);
+    score += 30;
+  } else {
+    checks.push(`✗ Number format is invalid or non-UK: ${normalised} — this is a strong spoofing indicator.`);
+    score += 0;
+  }
 
   // CHECK 2: Provenance — the core of Aletheia
   const officialList = OFFICIAL_NUMBERS[claimedOrg] || [];
   const isExactMatch = officialList.includes(normalised);
 
+  // FIXED in v2: "Other" previously gave 40/100 which looked like
+  // partial trust. It now correctly gives a low score and stays INCONCLUSIVE.
   if (claimedOrg === "Other") {
     checks.push("• No claimed organisation to verify against. Verdict must remain inconclusive.");
-    score += 10;
+    checks.push("• Advice: Hang up and contact the organisation via its official website. Never use a number given by the caller.");
+    score = Math.min(score, 20);
     verdict = "INCONCLUSIVE";
     explanation = "No official number exists for comparison. Do not act on instructions from this call. Hang up and call the organisation via its official website.";
   } else if (isExactMatch) {
     checks.push(`✓ Number matches the official published number for ${claimedOrg}.`);
     score += 60;
     verdict = "AUTHENTIC";
-    explanation = `The provenance is consistent. The number presented matches the official published number for ${claimedOrg}. You may still exercise caution, but there is no technical evidence of spoofing.`;
+    explanation = `Provenance is consistent. The number presented matches the official published number for ${claimedOrg}. You may still exercise caution, but there is no technical evidence of spoofing.`;
   } else {
     checks.push(`✗ Number does NOT match any official published number for ${claimedOrg}.`);
     checks.push(`  Official number(s) on file: ${officialList.join(", ")}`);
-    score += 5;
+    // FIXED: Previously added +5 even on failure, which inflated the score.
+    // A provenance failure should not increase confidence.
     verdict = "SPURIOUS";
     explanation = `Provenance has failed. A genuine ${claimedOrg} call should originate from its official number. This call is highly likely to be spoofed. Do not share codes, passwords, or transfer funds. Hang up and call ${claimedOrg} directly via its official website.`;
   }
 
-  // CHECK 3: Cap score at 100
-  score = Math.min(100, score);
+  // CHECK 3: Cap score at 100, floor at 0
+  score = Math.max(0, Math.min(100, score));
 
   renderResult(verdict, explanation, score, checks);
 
@@ -126,18 +174,31 @@ form.addEventListener("submit", (e) => {
     checks,
     generatedAt: new Date().toISOString()
   };
+
+  // Enable PDF button only after a valid report exists
+  downloadBtn.disabled = false;
 });
 
 function renderResult(verdict, explanation, score, checks) {
   resultSection.classList.remove("hidden");
   verdictBadge.textContent = verdict;
   verdictBadge.className = "verdict-badge " + verdict.toLowerCase();
-  verdictTitle.textContent = verdict === "AUTHENTIC" ? "Provenance Verified" : verdict === "SPURIOUS" ? "Provenance Failed — Treat as Fraud" : "Inconclusive — Do Not Trust";
+  verdictTitle.textContent = verdict === "AUTHENTIC"
+    ? "Provenance Verified"
+    : verdict === "SPURIOUS"
+    ? "Provenance Failed — Treat as Fraud"
+    : "Inconclusive — Do Not Trust";
   verdictExplanation.textContent = explanation;
   confidenceScore.textContent = score + " / 100";
   confidenceBar.style.width = score + "%";
-  confidenceBar.style.background = verdict === "SPURIOUS" ? "#d64545" : verdict === "AUTHENTIC" ? "#2ea86b" : "#e0a32e";
+  confidenceBar.style.background = verdict === "SPURIOUS"
+    ? "#d64545"
+    : verdict === "AUTHENTIC"
+    ? "#2ea86b"
+    : "#e0a32e";
 
+  // EXPERT NOTE: textContent is used, not innerHTML, to prevent
+  // XSS if a user pastes malicious text into the notes field.
   checksList.innerHTML = "";
   checks.forEach(c => {
     const li = document.createElement("li");
@@ -153,40 +214,53 @@ function renderResult(verdict, explanation, score, checks) {
  * EXPERT NOTE: We generate a hash from the report content
  * using SHA-256. This provides tamper-evidence: if the PDF
  * is edited, the hash will no longer match.
+ *
+ * FIXED in v2: PDF previously overflowed off the page for long
+ * checks. It now paginates correctly and wraps the SHA-256 hash.
  */
-document.getElementById("downloadBtn").addEventListener("click", async () => {
+downloadBtn.addEventListener("click", async () => {
   if (!lastReport) return;
 
+  // FIXED: Graceful failure if CDN is blocked or offline
+  if (!window.jspdf) {
+    alert("PDF library could not load. Please check your internet connection and try again.");
+    return;
+  }
+
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
 
   // Create tamper-evident hash
   const payload = JSON.stringify(lastReport);
   const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
   const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
-  doc.setFontSize(18);
-  doc.text("ALETHEIA — Evidence Report", 14, 18);
-  doc.setFontSize(11);
-  doc.text("Call Provenance Verifier", 14, 26);
-  doc.text(`Verdict: ${lastReport.verdict}`, 14, 38);
-  doc.text(`Confidence: ${lastReport.score} / 100`, 14, 46);
-  doc.text(`Caller Number (as entered): ${lastReport.rawNumber}`, 14, 54);
-  doc.text(`Normalised: ${lastReport.normalised}`, 14, 62);
-  doc.text(`Claimed Organisation: ${lastReport.claimedOrg}`, 14, 70);
-  doc.text(`Time of Call: ${lastReport.callTime}`, 14, 78);
-  doc.text(`Generated: ${lastReport.generatedAt}`, 14, 86);
-  doc.text("Checks:", 14, 98);
-  let y = 106;
-  lastReport.checks.forEach(c => {
-    const lines = doc.splitTextToSize(c, 180);
+  // Helper: Writes text and adds a new page if needed — prevents overflow
+  let y = 18;
+  const write = (text, size = 11, bold = false) => {
+    if (y > 275) { doc.addPage(); y = 18; }
+    doc.setFontSize(size);
+    if (bold) doc.setFont("helvetica", "bold"); else doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(text, 180);
     doc.text(lines, 14, y);
-    y += lines.length * 6 + 4;
-  });
-  doc.text(`Notes: ${lastReport.notes || "None provided"}`, 14, y + 6);
-  doc.text(`SHA-256 Hash: ${hash}`, 14, y + 18);
-  doc.setFontSize(9);
-  doc.text("This report was generated entirely in the browser. It is for evidence preservation and is not a legal determination.", 14, y + 28);
+    y += lines.length * 6 + 3;
+  };
+
+  write("ALETHEIA — Evidence Report", 18, true);
+  write("Call Provenance Verifier", 11);
+  write(`Verdict: ${lastReport.verdict}`, 12, true);
+  write(`Confidence: ${lastReport.score} / 100`, 11);
+  write(`Caller Number (as entered): ${lastReport.rawNumber}`, 11);
+  write(`Normalised: ${lastReport.normalised}`, 11);
+  write(`Claimed Organisation: ${lastReport.claimedOrg}`, 11);
+  write(`Time of Call: ${lastReport.callTime}`, 11);
+  write(`Generated: ${lastReport.generatedAt}`, 11);
+  write("Checks:", 12, true);
+  lastReport.checks.forEach(c => write(c, 10));
+  write(`Notes: ${lastReport.notes || "None provided"}`, 11);
+  write(`SHA-256 Hash:`, 11, true);
+  write(hash, 9);
+  write("This report was generated entirely in the browser. It is for evidence preservation and is not a legal determination.", 9);
 
   doc.save(`aletheia-report-${Date.now()}.pdf`);
 });
