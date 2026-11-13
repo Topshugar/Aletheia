@@ -2,34 +2,37 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
-  <!--
-    EXPERT NOTE: viewport is critical for mobile.
-    Without it, mobile browsers render the desktop layout scaled down,
-    which is the primary cause of unprofessional mobile sites.
-  -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Aletheia — Call Provenance Verifier. Reveal what is hidden. Verify the origin of a call before you trust it." />
   <title>Aletheia — Call Provenance Verifier</title>
   <link rel="stylesheet" href="style.css" />
-  <!--
-    EXPERT NOTE: jsPDF is loaded via CDN for client-side PDF generation.
-    No data leaves the browser. This is a deliberate privacy architecture:
-    a security tool must not require the user to trust a server.
-  -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
 
   <!--
-    HEADER: Brand identity.
-    EDITED: Now uses the coded SVG logo from assets/aletheia.svg
-    instead of a text mark. SVG is vector, so it stays sharp on
-    all mobile screens and loads in ~2KB vs ~300KB for a PNG.
-    The old <div class="brand-mark"> has been removed.
+    HEADER: FIXED — Logo is now INLINE SVG, not an external file.
+    REASON THE OLD LOGO DID NOT SHOW:
+    <img src="assets/aletheia.svg"> fails if:
+    1. assets/aletheia.svg was never uploaded
+    2. The file name case is wrong (Aletheia.svg vs aletheia.svg)
+    3. GitHub Pages Jekyll ignores the assets/ folder
+    Inline SVG has zero dependencies — it cannot 404.
   -->
   <header class="site-header">
-    <img src="assets/aletheia.svg" alt="Aletheia logo — gold letter A in a Greek key circle" class="logo-img" width="52" height="52" />
+    <svg class="logo-img" width="52" height="52" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aletheia logo — gold letter A in a Greek key circle">
+      <!-- Outer gold circle -->
+      <circle cx="50" cy="50" r="48" fill="#0a0a0c" stroke="#c9a227" stroke-width="2"/>
+      <!-- Greek key / meander — simplified ring -->
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#c9a227" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
+      <!-- Inner circle -->
+      <circle cx="50" cy="50" r="32" fill="none" stroke="#c9a227" stroke-width="0.8" opacity="0.4"/>
+      <!-- Letter A -->
+      <path d="M50 28 L68 72 H60 L56 62 H44 L40 72 H32 L50 28 Z M50 42 L47 52 H53 L50 42 Z" fill="#c9a227"/>
+      <!-- Small diamond under A -->
+      <rect x="47" y="66" width="6" height="6" transform="rotate(45 50 69)" fill="#e8c766"/>
+    </svg>
     <div class="brand-text">
       <h1>ALETHEIA</h1>
       <p class="tagline">Reveal What Is Hidden</p>
@@ -38,21 +41,12 @@
 
   <main class="container">
 
-    <!--
-      ACADEMIC DEFINITION: A security tool must define its terms.
-      This prevents misuse and establishes scholarly credibility.
-    -->
     <section class="definition card">
       <h2>Definition</h2>
       <p><strong>Aletheia</strong> <span class="greek">(ἀλήθεια)</span> — <em>noun.</em> Truth; disclosure; the state of not being hidden.</p>
       <p>Aletheia does not track callers. It verifies <strong>provenance</strong> — whether a call truly originates from the organisation it claims to represent — using only data you provide.</p>
     </section>
 
-    <!--
-      INPUT FORM: Mobile-first.
-      inputmode="tel" triggers the numeric keypad on mobile.
-      autocomplete="off" prevents the browser storing sensitive numbers.
-    -->
     <section class="card">
       <h2>Verify a Call</h2>
       <form id="verifyForm" novalidate>
@@ -81,10 +75,6 @@
       </form>
     </section>
 
-    <!--
-      RESULT: Hidden by default. Revealed via JavaScript.
-      aria-live ensures screen readers announce the verdict.
-    -->
     <section id="result" class="card result hidden" aria-live="polite">
       <div id="verdictBadge" class="verdict-badge">—</div>
       <h2 id="verdictTitle">Verdict</h2>
@@ -102,10 +92,6 @@
       <p class="legal-note">This report is for evidence preservation. It is not a legal determination of fraud. Report suspected fraud to Action Fraud.</p>
     </section>
 
-    <!--
-      METHODOLOGY: Scholarly transparency.
-      A security tool that hides its logic cannot be trusted.
-    -->
     <section class="card methodology">
       <h2>Methodology</h2>
       <ol>
